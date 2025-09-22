@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import ThemeToggle from "@/components/ui/theme-toggle"
+import PeerConnectLogo from "@/components/peerconnect-logo"
 
 export default function HomePage() {
   return (
@@ -11,6 +12,7 @@ export default function HomePage() {
       <header className="container mx-auto px-6 py-8">
         <nav className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
+            <PeerConnectLogo />
             <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">PeerConnect</div>
           </div>
           <div className="flex items-center space-x-4">
@@ -36,23 +38,13 @@ export default function HomePage() {
             <Button size="lg" asChild className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-md hover:scale-105 transition-transform">
               <Link href="/auth/signup">Start Learning</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="border-2 border-blue-400 dark:border-purple-400">
-              <Link href="/auth/signup">Become a Mentor</Link>
-            </Button>
+            
           </div>
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
-          <Card className="text-center bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
-            <CardHeader>
-              <div className="text-4xl mb-4">🤖</div>
-              <CardTitle className="font-bold text-blue-500 dark:text-purple-400">AI-Powered Matching</CardTitle>
-              <CardDescription>
-                Our intelligent system connects you with the perfect learning partners based on skills, goals, and availability.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+        <div className="grid md:grid-cols-2 gap-8 mt-20">
+          
 
           <Card className="text-center bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader>
