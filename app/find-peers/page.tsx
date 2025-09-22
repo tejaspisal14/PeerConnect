@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import PeerFinder from "@/components/peer-finder"
+import ThemeToggle from "@/components/ui/theme-toggle"
 
 export default async function FindPeersPage() {
   const supabase = await createClient()
@@ -31,28 +32,25 @@ export default async function FindPeersPage() {
     .eq("skill_type", "teaching")
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative bg-gradient-to-br from-blue-100 via-purple-200 to-pink-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-700">
+      <ThemeToggle />
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/80 dark:bg-gray-900/80 shadow-sm border-b backdrop-blur-md">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-blue-600">PeerConnect</h1>
+              <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">PeerConnect</h1>
               <span className="text-gray-400">|</span>
-              <span className="text-gray-600">Find Learning Partners</span>
+              <span className="text-gray-700 dark:text-gray-300">Find Peers</span>
             </div>
           </div>
         </div>
       </header>
-
       <main className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Find Your Perfect Learning Partner</h2>
-          <p className="text-gray-600">
-            Our smart matching system connects you with peers based on skills, availability, and learning goals.
-          </p>
-        </div>
-
+        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">Find Your Perfect Learning Partner</h2>
+        <p className="text-gray-700 dark:text-gray-300 mb-6">
+          Our AI-powered matching system connects you with peers based on skills, availability, and learning goals.
+        </p>
         <PeerFinder
           userId={data.user.id}
           userLearningSkills={userLearningSkills || []}
