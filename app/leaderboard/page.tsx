@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import LeaderboardDisplay from "@/components/leaderboard-display"
+import PeerConnectLogo from "@/components/peerconnect-logo"
 
 export default async function LeaderboardPage() {
   const supabase = await createClient()
@@ -41,7 +42,8 @@ export default async function LeaderboardPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-blue-600">PeerConnect</h1>
+              <PeerConnectLogo />
+                <h1 className="text-2xl font-bold text-blue-600">PeerConnect</h1>
               <span className="text-gray-400">|</span>
               <span className="text-gray-600">Leaderboard</span>
             </div>
