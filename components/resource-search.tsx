@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExternalLink, BookOpen, Video, FileText, Wrench, Plus, Search, Sparkles } from "lucide-react"
+import YouTubeSearchBar from "@/components/youtube-search-bar"
+import dynamic from "next/dynamic"
+const DynamicYouTubeSearchBar = dynamic(() => import("@/components/youtube-search-bar"), { ssr: false })
 import Link from "next/link"
 
 interface Skill {
@@ -275,13 +278,9 @@ export default function ResourceSearch({ skills, userSkills, initialResources, u
             </TabsTrigger>
             <TabsTrigger value="trending">Trending</TabsTrigger>
           </TabsList>
-
-          <Button asChild>
-            <Link href="/resources/add">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Resource
-            </Link>
-          </Button>
+          <div className="w-full max-w-md ml-4">
+            <DynamicYouTubeSearchBar />
+          </div>
         </div>
 
         <TabsContent value="all" className="space-y-6">
