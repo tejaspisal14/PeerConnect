@@ -18,6 +18,7 @@ export default async function DashboardPage() {
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", data.user.id).single()
 
   const { data: userPoints } = await supabase.from("user_points").select("*").eq("user_id", data.user.id).single()
+  const { data: userRank } = await supabase.rpc("get_user_rank", { user_id: data.user.id })
 
   const { data: userSkills } = await supabase
     .from("user_skills")
@@ -89,24 +90,24 @@ export default async function DashboardPage() {
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Level</CardTitle>
+              <CardTitle className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
+                <span className="text-blue-500">↗</span>
+                <span>Your Ranking</span>
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{userPoints?.level || 1}</div>
+            <CardContent className="flex items-center justify-between">
+              <div>
+                <div className="text-4xl font-bold text-blue-600">{userRank && userRank > 0 ? `#${userRank}` : "N/A"}</div>
+                <div className="text-sm text-gray-500 mt-1">Overall Rank</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold text-green-600">{userPoints?.points || 0}</div>
+                <div className="text-sm text-gray-500 mt-1">Total Points</div>
+              </div>
             </CardContent>
           </Card>
-
-          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Points</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{userPoints?.points || 0}</div>
-            </CardContent>
-          </Card>
-
           <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Sessions Taught</CardTitle>
@@ -115,7 +116,6 @@ export default async function DashboardPage() {
               <div className="text-2xl font-bold text-purple-600">{userPoints?.total_sessions_taught || 0}</div>
             </CardContent>
           </Card>
-
           <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Sessions Learned</CardTitle>
@@ -281,7 +281,7 @@ export default async function DashboardPage() {
         {/* Quick Actions */}
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-300 mb-4">Quick Actions</h3>
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-5 gap-4">
             <Button asChild className="h-auto p-6 flex-col space-y-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-md hover:scale-105 transition-transform">
               <Link href="/find-peers">
                 <div className="text-2xl">🔍</div>
@@ -307,6 +307,12 @@ export default async function DashboardPage() {
               <Link href="/achievements">
                 <div className="text-2xl">🏆</div>
                 <div>View Achievements</div>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent border-2 border-blue-400 dark:border-purple-400">
+              <Link href="/leaderboard">
+                <div className="text-2xl">📊</div>
+                <div>Leaderboard</div>
               </Link>
             </Button>
           </div>

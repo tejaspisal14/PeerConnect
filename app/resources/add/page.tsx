@@ -1,6 +1,11 @@
+"use client"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import AddResourceForm from "@/components/add-resource-form"
+import { useState } from "react"
+import YouTubeSearchBar from "@/components/youtube-search-bar"
+import dynamic from "next/dynamic"
+const DynamicYouTubeSearchBar = dynamic(() => import("@/components/youtube-search-bar"), { ssr: false })
 
 export default async function AddResourcePage() {
   const supabase = await createClient()
@@ -26,7 +31,7 @@ export default async function AddResourcePage() {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-blue-600">PeerConnect</h1>
               <span className="text-gray-400">|</span>
-              <span className="text-gray-600">Add Resource</span>
+              <span className="text-gray-600">Search YouTube Resources</span>
             </div>
           </div>
         </div>
@@ -34,13 +39,13 @@ export default async function AddResourcePage() {
 
       <main className="container mx-auto px-6 py-8 max-w-2xl">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Share a Learning Resource</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Find Learning Resources on YouTube</h2>
           <p className="text-gray-600">
-            Help the community by sharing valuable learning materials, tutorials, or tools.
+            Search for tutorials, lectures, and educational content directly from YouTube.
           </p>
         </div>
 
-        <AddResourceForm skills={skills || []} userId={data.user.id} />
+  <DynamicYouTubeSearchBar />
       </main>
     </div>
   )
