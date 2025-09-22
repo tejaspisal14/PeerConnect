@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import JitsiVideoCall from "./jitsi-video-call"
 
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Send, Paperclip, Video, Phone } from "lucide-react"
+import { Send, Paperclip, Video } from "lucide-react"
 
 interface Message {
   id: string
@@ -34,13 +35,14 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
   const [newMessage, setNewMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [showVideoCall, setShowVideoCall] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   const isUserMentor = session.mentor_id === currentUserId
   const otherUser = isUserMentor ? session.learner : session.mentor
 
-  // Scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -49,7 +51,10 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
     scrollToBottom()
   }, [messages])
 
-  // Set up real-time subscription for new messages
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   useEffect(() => {
     const channel = supabase
       .channel(`chat-${sessionId}`)
@@ -62,7 +67,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
           filter: `session_id=eq.${sessionId}`,
         },
         async (payload) => {
-          // Get sender info for the new message
           const { data: senderData } = await supabase
             .from("profiles")
             .select("display_name, avatar_url")
@@ -84,7 +88,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
     }
   }, [sessionId, supabase])
 
-  // Send message
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || isLoading) return
@@ -108,7 +111,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
     }
   }
 
-  // Send system message
   const sendSystemMessage = async (message: string) => {
     try {
       await supabase.from("chat_messages").insert({
@@ -122,12 +124,41 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
     }
   }
 
-  // Format timestamp
   const formatTime = (timestamp: string) => {
+    if (!isMounted) {
+      return new Date(timestamp).toISOString().slice(11, 16)
+    }
     return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
-  // Group messages by date
+  const formatDate = (dateString: string) => {
+    if (!isMounted) {
+      const date = new Date(dateString)
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+      const months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ]
+      return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
+    }
+    return new Date(dateString).toLocaleDateString([], {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
   const groupMessagesByDate = (messages: Message[]) => {
     const groups: { [key: string]: Message[] } = {}
     messages.forEach((message) => {
@@ -144,7 +175,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
 
   return (
     <div className="h-full flex flex-col">
-      {/* Session Info Bar */}
       <div className="bg-blue-50 border-b px-6 py-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -162,35 +192,42 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               {session.status}
             </Badge>
-            <Button size="sm" variant="outline" className="h-8 bg-transparent">
+            <Button
+              size="sm"
+              variant={showVideoCall ? "default" : "outline"}
+              className="h-8"
+              onClick={() => setShowVideoCall(!showVideoCall)}
+            >
               <Video className="w-4 h-4 mr-1" />
-              Video
-            </Button>
-            <Button size="sm" variant="outline" className="h-8 bg-transparent">
-              <Phone className="w-4 h-4 mr-1" />
-              Audio
+              {showVideoCall ? "Hide Video" : "Start Video"}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Messages Area */}
+      {showVideoCall && (
+        <div className="border-b">
+          <JitsiVideoCall
+            sessionId={sessionId}
+            currentUserId={currentUserId}
+            currentUserName={isUserMentor ? session.mentor?.display_name : session.learner?.display_name}
+            otherUserName={isUserMentor ? session.learner?.display_name : session.mentor?.display_name}
+            isActive={session.status === "active"}
+            onCallEnd={() => {
+              console.log("[v0] Video call ended from chat interface")
+              setShowVideoCall(false)
+            }}
+          />
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {Object.entries(messageGroups).map(([date, dayMessages]) => (
           <div key={date}>
-            {/* Date Separator */}
             <div className="flex items-center justify-center mb-4">
-              <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                {new Date(date).toLocaleDateString([], {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </div>
+              <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">{formatDate(date)}</div>
             </div>
 
-            {/* Messages for this date */}
             <div className="space-y-4">
               {dayMessages.map((message) => {
                 const isOwnMessage = message.sender_id === currentUserId
@@ -236,7 +273,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
           </div>
         ))}
 
-        {/* Typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
             <div className="flex items-end space-x-2 max-w-xs">
@@ -263,7 +299,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
       <div className="border-t bg-white p-4 flex-shrink-0">
         <form onSubmit={sendMessage} className="flex items-center space-x-2">
           <Button type="button" size="sm" variant="outline" className="flex-shrink-0 bg-transparent">
@@ -282,7 +317,6 @@ export default function ChatInterface({ sessionId, currentUserId, initialMessage
         </form>
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-gray-50 border-t px-4 py-2 flex-shrink-0">
         <div className="flex items-center justify-center space-x-2">
           <Button size="sm" variant="outline" onClick={() => sendSystemMessage("Session started")} className="text-xs">

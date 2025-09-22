@@ -23,14 +23,13 @@ interface UserSkill {
   skills: Skill
 }
 
-interface PeerMatch {
+interface Peer {
   id: string
   display_name: string
   bio: string | null
   location: string | null
   timezone: string | null
   skills: Skill[]
-  
   total_sessions: number
   avg_rating: number
 }
@@ -43,8 +42,8 @@ interface PeerFinderProps {
 
 export default function PeerFinder({ userId, userLearningSkills, userTeachingSkills }: PeerFinderProps) {
   const [selectedSkill, setSelectedSkill] = useState<string>("")
-  const [mentors, setMentors] = useState<PeerMatch[]>([])
-  const [learners, setLearners] = useState<PeerMatch[]>([])
+  const [mentors, setMentors] = useState<Peer[]>([])
+  const [learners, setLearners] = useState<Peer[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("find-mentors")
 
@@ -54,7 +53,6 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
   const findMentors = async (skillId?: string) => {
     setIsLoading(true)
     try {
-      // Find users who can teach the skills we want to learn
       const targetSkillId = skillId || (userLearningSkills.length > 0 ? userLearningSkills[0].skill_id : null)
 
       if (!targetSkillId) {
@@ -80,7 +78,6 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
         .neq("user_id", userId)
 
       if (potentialMentors) {
-        // Get session stats for each mentor
         const mentorsWithStats = await Promise.all(
           potentialMentors.map(async (mentor) => {
             const { data: sessionStats } = await supabase
@@ -88,28 +85,18 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
               .select("status")
               .eq("mentor_id", mentor.user_id)
 
+            const { data: reviews } = await supabase
+              .from("session_reviews")
+              .select("rating")
+              .eq("reviewee_id", mentor.user_id)
+
             const totalSessions = sessionStats?.length || 0
-            const completedSessions = sessionStats?.filter((s) => s.status === "completed").length || 0
 
-            // Simple AI matching score based on:
-            // - Skill match (base 0.7)
-            // - Experience (sessions completed)
-            // - Profile completeness
-            let matchScore = 0.7 // Base score for skill match
-
-            if (totalSessions > 0) {
-              matchScore += Math.min(0.2, totalSessions * 0.02) // Up to 0.2 for experience
+            let avgRating = 1.0
+            if (reviews && reviews.length > 0) {
+              const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0)
+              avgRating = totalRating / reviews.length
             }
-
-            if (mentor.profiles.bio) {
-              matchScore += 0.05 // Bonus for having bio
-            }
-
-            if (mentor.profiles.location) {
-              matchScore += 0.03 // Bonus for location info
-            }
-
-            
 
             return {
               id: mentor.user_id,
@@ -118,15 +105,13 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
               location: mentor.profiles.location,
               timezone: mentor.profiles.timezone,
               skills: [mentor.skills],
-              match_score: Math.min(0.99, Math.max(0.5, matchScore)),
               total_sessions: totalSessions,
-              avg_rating: 4.2 + Math.random() * 0.6, // Simulated rating
+              avg_rating: avgRating,
             }
           }),
         )
 
-        // Sort by match score
-        mentorsWithStats.sort((a, b) => b.match_score - a.match_score)
+        mentorsWithStats.sort((a, b) => b.avg_rating - a.avg_rating)
         setMentors(mentorsWithStats)
       }
     } catch (error) {
@@ -139,7 +124,6 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
   const findLearners = async (skillId?: string) => {
     setIsLoading(true)
     try {
-      // Find users who want to learn the skills we can teach
       const targetSkillId = skillId || (userTeachingSkills.length > 0 ? userTeachingSkills[0].skill_id : null)
 
       if (!targetSkillId) {
@@ -172,25 +156,18 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
               .select("status")
               .eq("learner_id", learner.user_id)
 
+            const { data: reviews } = await supabase
+              .from("session_reviews")
+              .select("rating")
+              .eq("reviewee_id", learner.user_id)
+
             const totalSessions = sessionStats?.length || 0
 
-            // AI matching score for learners
-            let matchScore = 0.8 // Base score for skill match
-
-            if (learner.profiles.bio) {
-              matchScore += 0.1 // Bonus for having bio
+            let avgRating = 1.0
+            if (reviews && reviews.length > 0) {
+              const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0)
+              avgRating = totalRating / reviews.length
             }
-
-            if (learner.profiles.timezone) {
-              matchScore += 0.05 // Bonus for timezone info
-            }
-
-            // Slight preference for newer learners
-            if (totalSessions < 3) {
-              matchScore += 0.05
-            }
-
-            matchScore += (Math.random() - 0.5) * 0.1
 
             return {
               id: learner.user_id,
@@ -199,14 +176,13 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
               location: learner.profiles.location,
               timezone: learner.profiles.timezone,
               skills: [learner.skills],
-              match_score: Math.min(0.99, Math.max(0.5, matchScore)),
               total_sessions: totalSessions,
-              avg_rating: 0, // Learners don't have ratings as mentors
+              avg_rating: avgRating,
             }
           }),
         )
 
-        learnersWithStats.sort((a, b) => b.match_score - a.match_score)
+        learnersWithStats.sort((a, b) => b.avg_rating - a.avg_rating)
         setLearners(learnersWithStats)
       }
     } catch (error) {
@@ -223,7 +199,6 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
         learner_id: role === "learner" ? userId : peerId,
         skill_id: skillId,
         status: "pending",
-        
       }
 
       const { data, error } = await supabase.from("peer_sessions").insert(sessionData).select().single()
@@ -244,7 +219,7 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
     }
   }, [activeTab])
 
-  const PeerCard = ({ peer, role }: { peer: PeerMatch; role: "mentor" | "learner" }) => (
+  const PeerCard = ({ peer, role }: { peer: Peer; role: "mentor" | "learner" }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -261,12 +236,9 @@ export default function PeerFinder({ userId, userLearningSkills, userTeachingSki
             </div>
           </div>
           <div className="text-right">
-            
-            {role === "mentor" && (
-              <div className="text-xs text-gray-500">
-                {peer.total_sessions} sessions • ⭐ {peer.avg_rating.toFixed(1)}
-              </div>
-            )}
+            <div className="text-xs text-gray-500">
+              {peer.total_sessions} sessions • ⭐ {peer.avg_rating.toFixed(1)}
+            </div>
           </div>
         </div>
       </CardHeader>

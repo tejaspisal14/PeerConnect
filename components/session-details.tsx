@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import SessionReviewForm from "./session-review-form"
+import JitsiVideoCall from "./jitsi-video-call"
 
 interface SessionDetailsProps {
   session: any
@@ -17,6 +19,8 @@ interface SessionDetailsProps {
 
 export default function SessionDetails({ session, messages, currentUserId }: SessionDetailsProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [hasReviewed, setHasReviewed] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -24,9 +28,40 @@ export default function SessionDetails({ session, messages, currentUserId }: Ses
   const otherUser = isUserMentor ? session.learner : session.mentor
   const userRole = isUserMentor ? "mentor" : "learner"
 
+  const revieweeId = isUserMentor ? session.learner_id : session.mentor_id
+  const revieweeName = otherUser?.display_name || (isUserMentor ? "Learner" : "Mentor")
+
+  useEffect(() => {
+    const checkExistingReview = async () => {
+      if (session.status === "completed") {
+        console.log("[v0] Checking for existing review for session:", session.id)
+
+        const { data, error } = await supabase
+          .from("session_reviews")
+          .select("id")
+          .eq("session_id", session.id)
+          .eq("reviewer_id", currentUserId)
+          .single()
+
+        if (error && error.code !== "PGRST116") {
+          // PGRST116 is "not found" error
+          console.error("[v0] Error checking review:", error)
+        }
+
+        console.log("[v0] Existing review data:", data)
+        setHasReviewed(!!data)
+        setShowReviewForm(!data) // Show form if no review exists
+      }
+    }
+
+    checkExistingReview()
+  }, [session.status, session.id, currentUserId])
+
   const updateSessionStatus = async (newStatus: string) => {
     setIsLoading(true)
     try {
+      console.log("[v0] Updating session status to:", newStatus)
+
       const { error } = await supabase
         .from("peer_sessions")
         .update({
@@ -37,9 +72,16 @@ export default function SessionDetails({ session, messages, currentUserId }: Ses
 
       if (error) throw error
 
-      router.refresh()
+      console.log("[v0] Session status updated successfully")
+
+      window.location.reload()
     } catch (error) {
-      console.error("Error updating session:", error)
+      console.error("[v0] Error updating session:", error)
+      if (error instanceof Error) {
+        alert(`Error updating session: ${error.message}`)
+      } else {
+        alert("Error updating session.")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -109,21 +151,22 @@ export default function SessionDetails({ session, messages, currentUserId }: Ses
               {session.learner?.bio && <p className="text-sm text-gray-600">{session.learner.bio}</p>}
             </div>
           </div>
-
-          {/* AI Match Score */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-blue-900">AI Match Score</h4>
-                <p className="text-sm text-blue-700">
-                  Our AI determined this is a {Math.round((session.ai_match_score || 0) * 100)}% compatibility match
-                </p>
-              </div>
-              <div className="text-2xl font-bold text-blue-600">{Math.round((session.ai_match_score || 0) * 100)}%</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
+
+      {/* Video Call Section - Show when session is active */}
+      {session.status === "active" && (
+        <JitsiVideoCall
+          sessionId={session.id}
+          currentUserId={currentUserId}
+          currentUserName={isUserMentor ? session.mentor?.display_name : session.learner?.display_name}
+          otherUserName={isUserMentor ? session.learner?.display_name : session.mentor?.display_name}
+          isActive={session.status === "active"}
+          onCallEnd={() => {
+            console.log("[v0] Video call ended")
+          }}
+        />
+      )}
 
       {/* Session Actions */}
       <Card>
@@ -171,6 +214,36 @@ export default function SessionDetails({ session, messages, currentUserId }: Ses
           </div>
         </CardContent>
       </Card>
+
+      {session.status === "completed" && showReviewForm && !hasReviewed && (
+        <div>
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-blue-800 font-medium">📝 Please rate your session</p>
+            <p className="text-blue-600 text-sm">Your feedback helps improve our AI matching algorithm</p>
+          </div>
+          <SessionReviewForm
+            sessionId={session.id}
+            revieweeId={revieweeId}
+            revieweeName={revieweeName}
+            userRole={userRole}
+            onReviewSubmitted={() => {
+              console.log("[v0] Review submitted callback triggered")
+              setShowReviewForm(false)
+              setHasReviewed(true)
+            }}
+          />
+        </div>
+      )}
+
+      {session.status === "completed" && hasReviewed && (
+        <Card className="border-green-200">
+          <CardContent className="text-center py-6">
+            <p className="text-green-600 font-medium">✓ Review Submitted</p>
+            <p className="text-sm text-gray-600 mt-1">Thank you for your feedback!</p>
+          </CardContent>
+        </Card>
+      )}
+
 
       {/* Recent Messages Preview */}
       {messages.length > 0 && (
