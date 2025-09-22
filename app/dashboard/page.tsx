@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import ThemeToggle from "@/components/ui/theme-toggle"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -52,16 +53,18 @@ export default async function DashboardPage() {
   const teachingSkills = userSkills?.filter((skill) => skill.skill_type === "teaching") || []
   const learningSkills = userSkills?.filter((skill) => skill.skill_type === "learning") || []
 
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative bg-gradient-to-br from-blue-100 via-purple-200 to-pink-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-700">
+      <ThemeToggle />
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/80 dark:bg-gray-900/80 shadow-sm border-b backdrop-blur-md">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-blue-600">PeerConnect</h1>
+              <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">PeerConnect</h1>
               <span className="text-gray-400">|</span>
-              <span className="text-gray-600">Dashboard</span>
+              <span className="text-gray-700 dark:text-gray-300">Dashboard</span>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" asChild>
@@ -80,42 +83,42 @@ export default async function DashboardPage() {
       <main className="container mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {profile?.display_name || "Learner"}!</h2>
-          <p className="text-gray-600">Ready to learn something new or share your knowledge?</p>
+          <h2 className="text-4xl font-extrabold mb-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">Welcome back, {profile?.display_name || "Learner"}!</h2>
+          <p className="text-lg text-gray-700 dark:text-gray-300">Ready to learn something new or share your knowledge?</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Level</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Level</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{userPoints?.level || 1}</div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">{userPoints?.level || 1}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Points</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Points</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{userPoints?.points || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Sessions Taught</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Sessions Taught</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">{userPoints?.total_sessions_taught || 0}</div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Sessions Learned</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">Sessions Learned</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{userPoints?.total_sessions_learned || 0}</div>
@@ -126,7 +129,7 @@ export default async function DashboardPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Skills Section */}
           <div className="space-y-6">
-            <Card>
+            <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   Skills I Can Teach
@@ -148,7 +151,7 @@ export default async function DashboardPage() {
                 ) : (
                   <p className="text-gray-500 text-sm">
                     No teaching skills added yet.{" "}
-                    <Link href="/skills" className="text-blue-600 hover:underline">
+                    <Link href="/skills" className="text-blue-600 dark:text-purple-400 hover:underline">
                       Add some skills
                     </Link>{" "}
                     to start mentoring others.
@@ -157,7 +160,7 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
               <CardHeader>
                 <CardTitle>Skills I Want to Learn</CardTitle>
                 <CardDescription>Areas where you're seeking mentorship</CardDescription>
@@ -174,7 +177,7 @@ export default async function DashboardPage() {
                 ) : (
                   <p className="text-gray-500 text-sm">
                     No learning goals set yet.{" "}
-                    <Link href="/skills" className="text-blue-600 hover:underline">
+                    <Link href="/skills" className="text-blue-600 dark:text-purple-400 hover:underline">
                       Add some skills
                     </Link>{" "}
                     to find mentors.
@@ -185,7 +188,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Recent Sessions */}
-          <Card>
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Recent Sessions
@@ -199,7 +202,7 @@ export default async function DashboardPage() {
               {recentSessions && recentSessions.length > 0 ? (
                 <div className="space-y-4">
                   {recentSessions.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div>
                         <div className="font-medium text-sm">{session.skills?.name}</div>
                         <div className="text-xs text-gray-500">
@@ -230,7 +233,7 @@ export default async function DashboardPage() {
               ) : (
                 <p className="text-gray-500 text-sm">
                   No sessions yet.{" "}
-                  <Link href="/find-peers" className="text-blue-600 hover:underline">
+                  <Link href="/find-peers" className="text-blue-600 dark:text-purple-400 hover:underline">
                     Find a peer
                   </Link>{" "}
                   to get started!
@@ -240,7 +243,7 @@ export default async function DashboardPage() {
           </Card>
 
           {/* Recent Achievements */}
-          <Card>
+          <Card className="bg-white/80 dark:bg-gray-900/80 shadow-lg backdrop-blur-md">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Recent Achievements
@@ -254,7 +257,7 @@ export default async function DashboardPage() {
               {recentAchievements && recentAchievements.length > 0 ? (
                 <div className="space-y-3">
                   {recentAchievements.map((achievement) => (
-                    <div key={achievement.id} className="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                    <div key={achievement.id} className="flex items-center space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
                       <div className="text-lg">{achievement.achievements.icon}</div>
                       <div>
                         <div className="font-medium text-sm">{achievement.achievements.name}</div>
@@ -277,31 +280,31 @@ export default async function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-300 mb-4">Quick Actions</h3>
           <div className="grid md:grid-cols-4 gap-4">
-            <Button asChild className="h-auto p-6 flex-col space-y-2">
+            <Button asChild className="h-auto p-6 flex-col space-y-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-md hover:scale-105 transition-transform">
               <Link href="/find-peers">
                 <div className="text-2xl">🔍</div>
                 <div>Find Learning Partners</div>
               </Link>
             </Button>
 
-            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent">
+            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent border-2 border-blue-400 dark:border-purple-400">
               <Link href="/skills">
                 <div className="text-2xl">⚡</div>
                 <div>Manage Skills</div>
               </Link>
             </Button>
 
-            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent">
-              <Link href="">
+            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent border-2 border-blue-400 dark:border-purple-400">
+              <Link href="/resources">
                 <div className="text-2xl">📚</div>
                 <div>Browse Resources</div>
               </Link>
             </Button>
 
-            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent">
-              <Link href="">
+            <Button asChild variant="outline" className="h-auto p-6 flex-col space-y-2 bg-transparent border-2 border-blue-400 dark:border-purple-400">
+              <Link href="/achievements">
                 <div className="text-2xl">🏆</div>
                 <div>View Achievements</div>
               </Link>
