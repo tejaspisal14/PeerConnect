@@ -11,6 +11,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+import ThemeToggle from "@/components/ui/theme-toggle"
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -28,9 +30,6 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-        },
       })
       if (error) throw error
       router.push("/dashboard")
@@ -42,16 +41,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-blue-100 via-purple-200 to-pink-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-700">
+      <ThemeToggle />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">PeerConnect</h1>
-          <p className="text-gray-600">AI-Powered Peer Learning Platform</p>
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">PeerConnect</h1>
+          <p className="text-lg text-gray-700 dark:text-gray-300">AI-Powered Peer Learning Platform</p>
         </div>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
+            <CardTitle className="text-2xl text-center font-bold text-blue-500 dark:text-purple-400">Welcome back</CardTitle>
             <CardDescription className="text-center">Sign in to continue your learning journey</CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,15 +79,15 @@ export default function LoginPage() {
                   className="w-full"
                 />
               </div>
-              {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+              {error && <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/30 p-3 rounded-md">{error}</div>}
+              <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-md hover:scale-105 transition-transform" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm">
-              <span className="text-gray-600">Don't have an account? </span>
-              <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+              <span className="text-gray-700 dark:text-gray-300">Don't have an account? </span>
+              <Link href="/auth/signup" className="text-blue-600 dark:text-purple-400 hover:text-blue-700 font-medium">
                 Sign up
               </Link>
             </div>
