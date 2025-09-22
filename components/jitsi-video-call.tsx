@@ -35,6 +35,9 @@ export default function JitsiVideoCall({
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [isInCall, setIsInCall] = useState(false)
 
+  const roomName = `peerconnect-${sessionId}`
+  const inviteLink = `https://meet.jit.si/${roomName}`
+
   // Load Jitsi Meet API script
   useEffect(() => {
     if (typeof window !== "undefined" && !window.JitsiMeetExternalAPI) {
@@ -42,11 +45,11 @@ export default function JitsiVideoCall({
       script.src = "https://meet.jit.si/external_api.js"
       script.async = true
       script.onload = () => {
-        console.log("[v0] Jitsi Meet API loaded")
+        console.log("[v1] Jitsi Meet API loaded")
         setIsJitsiLoaded(true)
       }
       script.onerror = () => {
-        console.error("[v0] Failed to load Jitsi Meet API")
+        console.error("[v1] Failed to load Jitsi Meet API")
       }
       document.head.appendChild(script)
 
@@ -78,7 +81,6 @@ export default function JitsiVideoCall({
   const initializeJitsi = () => {
     if (!jitsiContainerRef.current || !window.JitsiMeetExternalAPI) return
 
-    const roomName = `peerconnect-session-${sessionId}`
     const domain = "meet.jit.si"
 
     const options = {
@@ -87,125 +89,69 @@ export default function JitsiVideoCall({
       height: 400,
       parentNode: jitsiContainerRef.current,
       userInfo: {
-        displayName: currentUserName,
+        displayName: currentUserName || "Guest",
       },
       configOverwrite: {
+        prejoinPageEnabled: false,
         startWithAudioMuted: false,
         startWithVideoMuted: false,
-        enableWelcomePage: false,
-        prejoinPageEnabled: false,
-        disableModeratorIndicator: true,
-        startScreenSharing: false,
-        enableEmailInStats: false,
       },
       interfaceConfigOverwrite: {
         TOOLBAR_BUTTONS: [
           "microphone",
           "camera",
-          "closedcaptions",
           "desktop",
           "fullscreen",
           "fodeviceselection",
           "hangup",
-          "profile",
           "chat",
-          "recording",
-          "livestreaming",
-          "etherpad",
-          "sharedvideo",
           "settings",
           "raisehand",
           "videoquality",
-          "filmstrip",
-          "invite",
-          "feedback",
-          "stats",
-          "shortcuts",
           "tileview",
-          "videobackgroundblur",
-          "download",
-          "help",
-          "mute-everyone",
         ],
-        SETTINGS_SECTIONS: ["devices", "language", "moderator", "profile", "calendar"],
         SHOW_JITSI_WATERMARK: false,
         SHOW_WATERMARK_FOR_GUESTS: false,
         SHOW_BRAND_WATERMARK: false,
-        BRAND_WATERMARK_LINK: "",
-        SHOW_POWERED_BY: false,
-        DISPLAY_WELCOME_PAGE_CONTENT: false,
-        DISPLAY_WELCOME_PAGE_TOOLBAR_ADDITIONAL_CONTENT: false,
-        APP_NAME: "PeerConnect Session",
-        NATIVE_APP_NAME: "PeerConnect",
-        DEFAULT_BACKGROUND: "#474747",
-        DISABLE_VIDEO_BACKGROUND: false,
-        INITIAL_TOOLBAR_TIMEOUT: 20000,
-        TOOLBAR_TIMEOUT: 4000,
-        TOOLBAR_ALWAYS_VISIBLE: false,
       },
     }
 
     try {
       const jitsiApi = new window.JitsiMeetExternalAPI(domain, options)
 
-      jitsiApi.addEventListener("ready", () => {
-        console.log("[v0] Jitsi Meet is ready")
-        setIsInCall(true)
-      })
-
-      jitsiApi.addEventListener("participantJoined", (participant: any) => {
-        console.log("[v0] Participant joined:", participant.displayName)
-      })
-
-      jitsiApi.addEventListener("participantLeft", (participant: any) => {
-        console.log("[v0] Participant left:", participant.displayName)
-      })
-
       jitsiApi.addEventListener("videoConferenceJoined", () => {
-        console.log("[v0] User joined the video conference")
+        console.log("[v1] User joined the video conference")
         setIsInCall(true)
       })
 
       jitsiApi.addEventListener("videoConferenceLeft", () => {
-        console.log("[v0] User left the video conference")
+        console.log("[v1] User left the video conference")
         setIsInCall(false)
-        if (onCallEnd) {
-          onCallEnd()
-        }
+        if (onCallEnd) onCallEnd()
       })
 
       jitsiApi.addEventListener("readyToClose", () => {
-        console.log("[v0] Jitsi is ready to close")
+        console.log("[v1] Jitsi is ready to close")
         setIsInCall(false)
-        if (onCallEnd) {
-          onCallEnd()
-        }
+        if (onCallEnd) onCallEnd()
       })
 
       setApi(jitsiApi)
     } catch (error) {
-      console.error("[v0] Error initializing Jitsi:", error)
+      console.error("[v1] Error initializing Jitsi:", error)
     }
   }
 
   const toggleVideo = () => {
     if (api) {
-      if (isVideoEnabled) {
-        api.executeCommand("toggleVideo")
-      } else {
-        api.executeCommand("toggleVideo")
-      }
+      api.executeCommand("toggleVideo")
       setIsVideoEnabled(!isVideoEnabled)
     }
   }
 
   const toggleAudio = () => {
     if (api) {
-      if (isAudioEnabled) {
-        api.executeCommand("toggleAudio")
-      } else {
-        api.executeCommand("toggleAudio")
-      }
+      api.executeCommand("toggleAudio")
       setIsAudioEnabled(!isAudioEnabled)
     }
   }
@@ -251,7 +197,7 @@ export default function JitsiVideoCall({
   }
 
   return (
-    <Card className="border-green-200">
+    <Card className="border-green-200 relative">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
@@ -279,12 +225,22 @@ export default function JitsiVideoCall({
           className="w-full rounded-lg overflow-hidden bg-gray-900"
           style={{ minHeight: "400px" }}
         />
+
+        {/* Fallback overlay if stuck */}
         {!isInCall && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 rounded-lg">
-            <div className="text-center text-white">
-              <Video className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Connecting to video call...</p>
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-80 rounded-lg space-y-4">
+            <Video className="w-12 h-12 mx-auto text-gray-400" />
+            <p className="text-white text-lg">Connecting to video call...</p>
+
+            {/* 🔗 Invite link fallback */}
+            <a
+              href={inviteLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Join via Invite Link
+            </a>
           </div>
         )}
       </CardContent>
