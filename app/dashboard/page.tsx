@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import ThemeToggle from "@/components/ui/theme-toggle"
+import PeerConnectLogo from "@/components/peerconnect-logo"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -63,7 +64,8 @@ export default async function DashboardPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">PeerConnect</h1>
+              <PeerConnectLogo />
+<h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">PeerConnect</h1>
               <span className="text-gray-400">|</span>
               <span className="text-gray-700 dark:text-gray-300">Dashboard</span>
             </div>
